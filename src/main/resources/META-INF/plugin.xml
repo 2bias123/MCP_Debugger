@@ -13,9 +13,10 @@
     <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
          Guidelines: https://plugins.jetbrains.com/docs/marketplace/best-practices-for-listing.html#plugin-description -->
     <description><![CDATA[
-        Enter short description for your plugin here.<br>
-        <em>most HTML tags may be used</em>
-    ]]></description>
+A lightweight debugging and inspection tool for Model Context Protocol (MCP) development.
+The plugin integrates with IntelliJ IDEA and PyCharm to let developers connect to MCP servers, explore available tools, and invoke them directly from the IDE.
+Built with Kotlin and Compose for Desktop, it provides a modern, intuitive interface for working with AI-driven development workflows.
+]]></description>
 
     <!-- Product and plugin compatibility requirements.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
@@ -24,6 +25,9 @@
     <!-- Extension points defined by the plugin.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html -->
     <extensions defaultExtensionNs="com.intellij">
-
+        <toolWindow id="MCP Inspector Lite"
+                    anchor="right"
+                    factoryClass="com.example.mcp_debugger.McpToolWindowFactory"/>
     </extensions>
+
 </idea-plugin>
