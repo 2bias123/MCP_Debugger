@@ -17,6 +17,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Alignment
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import com.intellij.openapi.application.ApplicationManager
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 class McpToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
@@ -128,21 +134,39 @@ fun DetailsPane(
     selectedTool: State<String?>,
     result: MutableState<String?>
 ) {
-    Text("Details & Results Pne", style = MaterialTheme.typography.titleMedium)
-    Spacer(Modifier.height(8.dp))
-    if (!selectedTool.value.isNullOrBlank()) {
-        Text("Selected tool: $selectedTool")
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(12.dp),
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.Start
+    ) {
+        Text("📄 Details & Results Pane", style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(8.dp))
-        Button(onClick = {
-            result.value = "Invoked ${selectedTool.value}  successfully!"
-        }) {
-            Text("Invoke")
+
+        if (!selectedTool.value.isNullOrBlank()) {
+            Text("Selected tool: ${selectedTool.value}")
+            Spacer(Modifier.height(8.dp))
+
+            Button(onClick = {
+                ApplicationManager.getApplication().executeOnPooledThread {
+                    val res = invokeToolSync(selectedTool.value!!, "Hello MCP!")
+                    ApplicationManager.getApplication().invokeLater {
+                        result.value = res
+                    }
+                }
+            }) {
+                Text("Invoke")
+            }
+        } else {
+            Text("Select a tool to view details.")
         }
-    } else {
-        Text("Select a tool to view details.")
-    }
-    Spacer(Modifier.height(8.dp))
-    result.value?.let {
-        Text("Result: $it")
+
+        Spacer(Modifier.height(12.dp))
+
+        result.value?.let {
+            Text("Result: $it")
+        }
     }
 }
+

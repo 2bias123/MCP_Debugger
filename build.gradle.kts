@@ -25,15 +25,12 @@ dependencies {
     }
 
     implementation(compose.desktop.currentOs)
-
-    implementation("io.ktor:ktor-client-cio:2.3.4")
-    implementation("io.ktor:ktor-client-content-negotiation:2.3.4")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.4")
-    implementation(compose.desktop.currentOs)
     implementation(compose.material3)
     implementation(compose.foundation)
     implementation(compose.runtime)
     implementation(compose.ui)
+
+    // JSON utilities
     implementation("org.json:json:20231013")
 }
 
