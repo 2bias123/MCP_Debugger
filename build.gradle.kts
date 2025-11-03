@@ -34,6 +34,7 @@ dependencies {
     implementation(compose.foundation)
     implementation(compose.runtime)
     implementation(compose.ui)
+    implementation("org.json:json:20231013")
 }
 
 intellijPlatform {

@@ -90,16 +90,14 @@ fun ConnectionPane(
             "Connection Pane",
             style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp)
         )
-
         Spacer(Modifier.height(6.dp))
         Button(
             onClick = {
-                println("Connecting...")
-                isConnected.value = true
-                tools.clear()
-                tools.addAll(listOf("summarize", "translate", "analyze"))
+                if (!isConnected.value) {
+                    connectToServer(isConnected, tools)
+                }
                       }) {
-            Text("Connect", fontSize = 11.sp)
+            Text(if (isConnected.value) "Connected" else "Connect to MCP server")
         }
     }
 }
