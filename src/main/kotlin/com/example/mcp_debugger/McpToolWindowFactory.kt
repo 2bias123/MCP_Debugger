@@ -1,5 +1,6 @@
 package com.example.mcp_debugger
 
+import androidx.compose.foundation.border
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
@@ -13,7 +14,6 @@ import androidx.compose.ui.unit.dp
 
 class McpToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-        // Create a Compose UI panel and attach it to the IntelliJ tool window
         val composePanel = ComposePanel().apply {
             setContent {
                 MaterialTheme {
@@ -30,14 +30,37 @@ class McpToolWindowFactory : ToolWindowFactory {
 
 @Composable
 fun McpInspectorUI() {
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text(
-            "🔌 MCP Inspector Lite",
-            style = MaterialTheme.typography.headlineSmall
-        )
-        Spacer(Modifier.height(12.dp))
-        Button(onClick = { println("Connect clicked!") }) {
-            Text("Connect to MCP Server")
+    Column(
+        modifier = Modifier.fillMaxSize().padding(8.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(4.dp)
+                .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.medium)
+        ) {
+            Text( "Pane 1", style = MaterialTheme.typography.headlineSmall )
+        }
+
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(4.dp)
+                .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.medium)
+        ) {
+            Text( "Pane 2", style = MaterialTheme.typography.headlineSmall )
+        }
+
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .padding(4.dp)
+                .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.medium)
+        ) {
+            Text( "Pane 3", style = MaterialTheme.typography.headlineSmall )
         }
     }
 }
