@@ -8,9 +8,15 @@ import com.intellij.ui.content.ContentFactory
 import androidx.compose.ui.awt.ComposePanel
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.Alignment
+import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateList
 
 class McpToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
@@ -30,6 +36,11 @@ class McpToolWindowFactory : ToolWindowFactory {
 
 @Composable
 fun McpInspectorUI() {
+    val isConnected = remember { mutableStateOf(false) }
+    val tools = remember { mutableStateListOf<String>() }
+    val selectedTool = remember { mutableStateOf<String?>(null) }
+    val result = remember { mutableStateOf<String?>(null) }
+
     Column(
         modifier = Modifier.fillMaxSize().padding(8.dp)
     ) {
@@ -40,7 +51,7 @@ fun McpInspectorUI() {
                 .padding(4.dp)
                 .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.medium)
         ) {
-            Text( "Pane 1", style = MaterialTheme.typography.headlineSmall )
+            ConnectionPane(isConnected, tools)
         }
 
         Box(
@@ -50,7 +61,7 @@ fun McpInspectorUI() {
                 .padding(4.dp)
                 .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.medium)
         ) {
-            Text( "Pane 2", style = MaterialTheme.typography.headlineSmall )
+            ToolsPane(isConnected, tools, selectedTool)
         }
 
         Box(
@@ -60,7 +71,80 @@ fun McpInspectorUI() {
                 .padding(4.dp)
                 .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.medium)
         ) {
-            Text( "Pane 3", style = MaterialTheme.typography.headlineSmall )
+            DetailsPane(selectedTool, result)
         }
+    }
+}
+
+@Composable
+fun ConnectionPane(
+    isConnected: MutableState<Boolean>,
+    tools: SnapshotStateList<String>
+) {
+    Column(
+        modifier = Modifier.fillMaxSize().padding(6.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            "Connection Pane",
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 12.sp)
+        )
+
+        Spacer(Modifier.height(6.dp))
+        Button(
+            onClick = {
+                println("Connecting...")
+                isConnected.value = true
+                tools.clear()
+                tools.addAll(listOf("summarize", "translate", "analyze"))
+                      }) {
+            Text("Connect", fontSize = 11.sp)
+        }
+    }
+}
+
+@Composable
+fun ToolsPane(
+    isConnected: State<Boolean>,
+    tools: List<String>,
+    selectedTool: MutableState<String?>
+) {
+    if (!isConnected.value) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("Connect first to load tools.")
+        }
+    } else {
+        LazyColumn(Modifier.fillMaxSize().padding(8.dp)) {
+            items(tools) { tool ->
+                TextButton(onClick = { selectedTool.value = tool }) {
+                    Text(tool)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DetailsPane(
+    selectedTool: State<String?>,
+    result: MutableState<String?>
+) {
+    Text("Details & Results Pne", style = MaterialTheme.typography.titleMedium)
+    Spacer(Modifier.height(8.dp))
+    if (!selectedTool.value.isNullOrBlank()) {
+        Text("Selected tool: $selectedTool")
+        Spacer(Modifier.height(8.dp))
+        Button(onClick = {
+            result.value = "Invoked ${selectedTool.value}  successfully!"
+        }) {
+            Text("Invoke")
+        }
+    } else {
+        Text("Select a tool to view details.")
+    }
+    Spacer(Modifier.height(8.dp))
+    result.value?.let {
+        Text("Result: $it")
     }
 }
