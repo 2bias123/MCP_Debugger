@@ -1,6 +1,5 @@
 package com.example.mcp_debugger
 
-import ai.grazie.utils.json.JSONObject
 import androidx.compose.foundation.border
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
@@ -14,23 +13,32 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.Alignment
 import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshots.SnapshotStateList
-import com.intellij.openapi.application.ApplicationManager
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import androidx.compose.ui.graphics.Color
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.clickable
 
 class McpToolWindowFactory : ToolWindowFactory {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val composePanel = ComposePanel().apply {
             setContent {
-                MaterialTheme {
-                    McpInspectorUI()
+                val darkColors = darkColorScheme(
+                    background = Color(0xFF1E1E1E),
+                    surface = Color(0xFF2C2C2C),
+                    onBackground = Color(0xFFE0E0E0),
+                    onSurface = Color(0xFFE0E0E0),
+                    primary = Color(0xFF64B5F6),
+                    secondary = Color(0xFF81C784)
+                )
+
+                MaterialTheme(colorScheme = darkColors) {
+                    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                        McpInspectorUI()
+                    }
                 }
             }
         }
@@ -105,13 +113,20 @@ fun ConnectionPane(
     tools: SnapshotStateList<McpTool>,
     onDisconnect: () -> Unit
 ) {
-   val scope = rememberCoroutineScope()
+    val scope = rememberCoroutineScope()
+    val scrollState = rememberScrollState()
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(8.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(8.dp)
+            .verticalScroll(scrollState),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text("Connection", style = MaterialTheme.typography.titleSmall)
+        Text(
+            "Connection",
+            style = MaterialTheme.typography.titleSmall.copy(color = MaterialTheme.colorScheme.primary)
+        )
 
         OutlinedTextField(
             value = serverUrl.value,
@@ -123,22 +138,26 @@ fun ConnectionPane(
 
         when (val state = connectionState.value) {
             ConnectionState.Disconnected -> {
-                Button(onClick = {
-                    connectionState.value = ConnectionState.Connecting
-                    scope.launch {
-                        try {
-                            val fetched = connectAndFetchTools(serverUrl.value)
-                            tools.clear()
-                            tools.addAll(fetched)
-                            connectionState.value = ConnectionState.Connected(serverUrl.value)
-                        } catch (e: Exception) {
-                            connectionState.value = ConnectionState.Error(
-                                serverUrl.value,
-                                e.message ?: "Unknown error"
-                            )
+                Button(
+                    onClick = {
+                        connectionState.value = ConnectionState.Connecting
+                        scope.launch {
+                            try {
+                                val fetched = connectAndFetchTools(serverUrl.value)
+                                tools.clear()
+                                tools.addAll(fetched)
+                                connectionState.value = ConnectionState.Connected(serverUrl.value)
+                            } catch (e: Exception) {
+                                connectionState.value = ConnectionState.Error(
+                                    serverUrl.value,
+                                    e.message ?: "Unknown error"
+                                )
+                            }
                         }
-                    }
-                }) { Text("Connect") }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("Connect") }
+
                 Text("Status: not connected")
             }
 
@@ -147,13 +166,17 @@ fun ConnectionPane(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("Connecting to server ${serverUrl.value}..")
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                    Text("Connecting to ${serverUrl.value}…")
                 }
             }
 
             is ConnectionState.Connected -> {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = onDisconnect) { Text("Disconnect") }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Button(onClick = onDisconnect, modifier = Modifier.weight(1f)) { Text("Disconnect") }
                     Text("Connected to ${serverUrl.value}")
                 }
             }
@@ -164,10 +187,10 @@ fun ConnectionPane(
                     color = MaterialTheme.colorScheme.error
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button( onClick = {
-                        connectionState.value = ConnectionState.Disconnected
-                    }) { Text("Reset") }
-                    Button( onClick = {
+                    Button(onClick = { connectionState.value = ConnectionState.Disconnected }) {
+                        Text("Reset")
+                    }
+                    Button(onClick = {
                         connectionState.value = ConnectionState.Connecting
                         scope.launch {
                             try {
@@ -197,18 +220,43 @@ fun ToolsPane(
 ) {
     when (connectionState.value) {
         is ConnectionState.Connected -> {
-            LazyColumn(Modifier.fillMaxSize().padding(8.dp)) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 items(tools) { tool ->
-                    TextButton(onClick = { selectedTool.value = tool }) {
-                        Text(tool.name)
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { selectedTool.value = tool }
+                            .padding(vertical = 2.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Text(
+                            text = tool.name,
+                            modifier = Modifier.padding(12.dp),
+                            color = MaterialTheme.colorScheme.onSurface,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                 }
             }
         }
-        is ConnectionState.Connecting -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Connecting…") }
-        is ConnectionState.Error, ConnectionState.Disconnected -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Connect to load tools.") }
+
+        is ConnectionState.Connecting ->
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Connecting…", color = MaterialTheme.colorScheme.onSurface)
+            }
+
+        is ConnectionState.Error, ConnectionState.Disconnected ->
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Connect to load tools.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
     }
 }
+
 
 @Composable
 fun DetailsPane(
@@ -218,46 +266,78 @@ fun DetailsPane(
     paramValues: MutableMap<String, String>
 ) {
     val scope = rememberCoroutineScope()
-    Column(Modifier.fillMaxSize().padding(12.dp)) {
-        Text("📄 Details & Results", style = MaterialTheme.typography.titleMedium)
-        Spacer(Modifier.height(8.dp))
+    val scrollState = rememberScrollState()
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(12.dp)
+            .verticalScroll(scrollState),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            "📄 Details & Results",
+            style = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.primary)
+        )
 
         val tool = selectedTool.value
         if (tool == null) {
-            Text("Select a tool to view details.")
+            Text("Select a tool to view details.", color = MaterialTheme.colorScheme.onSurfaceVariant)
             return
         }
 
-        Text("Selected: ${tool.name}")
-        tool.description?.let { Text(it) }
-        Spacer(Modifier.height(8.dp))
+        Text("Selected: ${tool.name}", color = MaterialTheme.colorScheme.onSurface)
+        tool.description?.let {
+            Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
 
+        Divider(modifier = Modifier.padding(vertical = 4.dp))
+
+        // Dynamic input fields
         tool.parameters.forEach { param ->
             OutlinedTextField(
                 value = paramValues[param.name] ?: "",
                 onValueChange = { paramValues[param.name] = it },
                 label = { Text("${param.name}${if (param.required) " *" else ""}") },
-                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
             )
         }
-        Spacer(Modifier.height(8.dp))
 
         val connected = connectionState.value is ConnectionState.Connected
         Button(
             enabled = connected,
+            modifier = Modifier.fillMaxWidth(),
             onClick = {
                 val server = (connectionState.value as ConnectionState.Connected).serverUrl
                 scope.launch {
-                    val server = (connectionState.value as ConnectionState.Connected).serverUrl
                     val inputJson = org.json.JSONObject(paramValues as Map<*, *>).toString()
                     result.value = invokeToolSuspend(server, tool.name, inputJson)
                 }
             }
-        ) { Text(if (connected) "Invoke" else "Connect first") }
+        ) { Text(if (connected) "Invoke Tool" else "Connect first") }
 
-        Spacer(Modifier.height(12.dp))
-        result.value?.let { Text("Result: $it") }
+        Divider(modifier = Modifier.padding(vertical = 4.dp))
+
+        result.value?.let {
+            Text(
+                "Result:",
+                style = MaterialTheme.typography.titleSmall.copy(color = MaterialTheme.colorScheme.secondary)
+            )
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
+            ) {
+                Text(
+                    text = it,
+                    modifier = Modifier.padding(8.dp),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+        }
     }
 }
+
 
 
