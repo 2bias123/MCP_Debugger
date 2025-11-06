@@ -10,12 +10,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
@@ -23,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.mcp_debugger.model.*
 import com.example.mcp_debugger.network.connectAndFetchTools
+import com.example.mcp_debugger.network.disconnectFromServer
 import kotlinx.coroutines.launch
 
 
@@ -75,7 +79,7 @@ fun ConnectionPane(
                             }
                         }
                     },
-                    modifier = Modifier.fillMaxWidth()
+                    enabled = connectionState.value !is ConnectionState.Connecting
                 ) { Text("Connect") }
 
                 Text("Status: not connected")
@@ -96,10 +100,16 @@ fun ConnectionPane(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Button(onClick = onDisconnect, modifier = Modifier.weight(1f)) { Text("Disconnect") }
-                    Text("Connected to ${serverUrl.value}")
+                    Button(
+                        onClick = onDisconnect,
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+                    ) {
+                        Text("Disconnect", color = MaterialTheme.colorScheme.onErrorContainer)
+                    }
+                    Text("Connected to ${serverUrl.value}", color = MaterialTheme.colorScheme.onSurface)
                 }
             }
+
 
             is ConnectionState.Error -> {
                 Text(

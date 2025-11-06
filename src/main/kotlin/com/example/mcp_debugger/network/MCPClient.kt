@@ -1,5 +1,8 @@
 package com.example.mcp_debugger.network
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -30,6 +33,20 @@ suspend fun invokeToolSuspend(base: String, toolName: String, input: String): St
     if (res.statusCode() !in 200..299) {
         """{"error":"HTTP ${res.statusCode()}"}"""
     } else res.body()
+}
+
+fun disconnectFromServer(
+    connectionState: MutableState<ConnectionState>,
+    tools: SnapshotStateList<McpTool>,
+    selectedTool: MutableState<McpTool?>,
+    result: MutableState<String?>,
+    paramValues: MutableMap<String, String>
+) {
+    tools.clear()
+    selectedTool.value = null
+    result.value = null
+    paramValues.clear()
+    connectionState.value = ConnectionState.Disconnected
 }
 
 fun parseTools(json: String): List<McpTool> {

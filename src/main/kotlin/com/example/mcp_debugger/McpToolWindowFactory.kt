@@ -12,6 +12,7 @@ import com.example.mcp_debugger.ui.panes.ToolsPane
 import com.example.mcp_debugger.ui.panes.ConnectionPane
 import com.example.mcp_debugger.model.ConnectionState
 import com.example.mcp_debugger.model.McpTool
+import com.example.mcp_debugger.network.disconnectFromServer
 
 
 @Composable
@@ -33,12 +34,13 @@ fun McpInspectorUI() {
                 .padding(4.dp)
                 .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.medium)
         ) {
-            ConnectionPane(connectionState, serverUrl, tools, onDisconnect = {
-                tools.clear()
-                selectedTool.value = null
-                result.value = null
-                connectionState.value = ConnectionState.Disconnected
-            }
+            ConnectionPane(
+                connectionState,
+                serverUrl,
+                tools,
+                onDisconnect = {
+                    disconnectFromServer(connectionState, tools, selectedTool, result, paramValues)
+                }
             )
         }
 
