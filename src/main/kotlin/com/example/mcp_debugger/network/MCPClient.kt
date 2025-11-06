@@ -1,4 +1,4 @@
-package com.example.mcp_debugger
+package com.example.mcp_debugger.network
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -7,6 +7,7 @@ import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import com.example.mcp_debugger.model.*
 
 private val http = HttpClient.newHttpClient()
 
@@ -30,19 +31,6 @@ suspend fun invokeToolSuspend(base: String, toolName: String, input: String): St
         """{"error":"HTTP ${res.statusCode()}"}"""
     } else res.body()
 }
-
-data class McpTool(
-    val name: String,
-    val description: String? = null,
-    val parameters: List<McpParameter> = emptyList(),
-    var tempSingleInput: String? = null
-)
-
-data class McpParameter(
-    val name: String,
-    val type: String,
-    val required: Boolean
-)
 
 fun parseTools(json: String): List<McpTool> {
     val array = JSONArray(json)
