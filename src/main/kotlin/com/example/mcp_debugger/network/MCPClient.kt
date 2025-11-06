@@ -1,6 +1,5 @@
 package com.example.mcp_debugger.network
 
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import kotlinx.coroutines.Dispatchers
@@ -24,7 +23,7 @@ suspend fun connectAndFetchTools(base: String): List<McpTool> = withContext(Disp
 }
 
 suspend fun invokeToolSuspend(base: String, toolName: String, input: String): String = withContext(Dispatchers.IO) {
-    val body = """{"tool":"$toolName","input":$input}"""  // 👈 no quotes around $input
+    val body = """{"tool":"$toolName","input":$input}"""
     val req = HttpRequest.newBuilder(URI.create("$base/invoke"))
         .header("Content-Type", "application/json")
         .POST(HttpRequest.BodyPublishers.ofString(body))
